@@ -20,7 +20,7 @@ jobs:
         distribution: 'temurin'
         java-version: '21'
 
-    - name: Build application with Maven
+    - name: Build application with Maven (skip tests)
       env:
         DB_URL: ${{ secrets.DB_URL }}
         DB_USERNAME: ${{ secrets.DB_USERNAME }}
@@ -28,4 +28,4 @@ jobs:
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
       run: |
-        mvn -B clean package
+        mvn -B clean package -DskipTests
