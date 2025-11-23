@@ -56,17 +56,16 @@ public class WebSecurityConfig {
 		return new BCryptPasswordEncoder();
 	}
 
-	/**
-	 * ✅ Configure CORS to allow frontend communication
-	 */
+
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
 
-		// Allow specific frontend origins (add more if needed)
 		configuration.setAllowedOrigins(Arrays.asList(
 				"http://localhost:8080",
-				"http://localhost:5173"
+				"http://localhost:5173",
+				"https://spendbuddyexpensetracker.netlify.app",   // Frontend (Netlify)
+				"https://spendbuddy-backend-api-v2.onrender.com"  // Backend (Render)
 		));
 
 		configuration.setAllowCredentials(true);
@@ -80,13 +79,12 @@ public class WebSecurityConfig {
 	}
 
 	/**
-	 * ✅ Main security filter chain (modern Spring Security syntax)
+	 * MAIN SECURITY FILTER CHAIN
 	 */
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
 				.csrf(csrf -> csrf.disable())
-				// ✅ Use new lambda-style CORS config
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
