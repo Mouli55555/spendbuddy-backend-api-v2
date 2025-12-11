@@ -65,6 +65,7 @@ public class WebSecurityConfig {
 				"http://localhost:8080",
 				"http://localhost:5173",
 				"https://spendbuddyexpensetracker.netlify.app",   // Frontend (Netlify)
+				"https://spendbuddy.vercel.app",  //Frontend (Vercel)
 				"https://spendbuddy-backend-api-v2.onrender.com"  // Backend (Render)
 		));
 
