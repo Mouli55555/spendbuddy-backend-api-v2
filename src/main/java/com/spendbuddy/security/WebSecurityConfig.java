@@ -25,80 +25,86 @@ import java.util.Arrays;
 @EnableMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig {
 
-	private final UserDetailsServiceImpl userDetailsService;
-	private final AuthEntryPointJwt unauthorizedHandler;
+    private final UserDetailsServiceImpl userDetailsService;
+    private final AuthEntryPointJwt unauthorizedHandler;
 
-	public WebSecurityConfig(UserDetailsServiceImpl userDetailsService, AuthEntryPointJwt unauthorizedHandler) {
-		this.userDetailsService = userDetailsService;
-		this.unauthorizedHandler = unauthorizedHandler;
-	}
+    public WebSecurityConfig(UserDetailsServiceImpl userDetailsService, AuthEntryPointJwt unauthorizedHandler) {
+        this.userDetailsService = userDetailsService;
+        this.unauthorizedHandler = unauthorizedHandler;
+    }
 
-	@Bean
-	public AuthTokenFilter authTokenFilter() {
-		return new AuthTokenFilter();
-	}
+    @Bean
+    public AuthTokenFilter authTokenFilter() {
+        return new AuthTokenFilter();
+    }
 
-	@Bean
-	public DaoAuthenticationProvider authenticationProvider() {
-		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-		authProvider.setUserDetailsService(userDetailsService);
-		authProvider.setPasswordEncoder(passwordEncoder());
-		return authProvider;
-	}
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
 
-	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-		return authConfig.getAuthenticationManager();
-	}
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
+    /**
+     * CORS CONFIGURATION
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
 
-	@Bean
-	public CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:8080",
+                "http://localhost:5173",
 
-		configuration.setAllowedOrigins(Arrays.asList(
-				"http://localhost:8080",
-				"http://localhost:5173",
-				"https://spendbuddyexpensetracker.netlify.app",   // Frontend (Netlify)
-				"https://spendbuddy.vercel.app",  //Frontend (Vercel)
-				"https://spendbuddy-backend-api-v2.onrender.com"  // Backend (Render)
-		));
+                // Production Frontends
+                "https://spendbuddyexpensetracker.netlify.app",
+                "https://spendbuddy.vercel.app",
 
-		configuration.setAllowCredentials(true);
-		configuration.addAllowedHeader("*");
-		configuration.addAllowedMethod("*");
-		configuration.addExposedHeader("Authorization");
+                // Backend endpoint used for testing
+                "https://spendbuddy-backend-api-v2.onrender.com"
+        ));
 
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", configuration);
-		return source;
-	}
+        configuration.setAllowCredentials(true);
+        configuration.addAllowedHeader("*");
+        configuration.addAllowedMethod("*");
+        configuration.addExposedHeader("Authorization");
 
-	/**
-	 * MAIN SECURITY FILTER CHAIN
-	 */
-	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		http
-				.csrf(csrf -> csrf.disable())
-				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-				.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(auth -> auth
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    /**
+     * MAIN SECURITY FILTER CHAIN
+     */
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/wakeup").permitAll()
-						.requestMatchers("/api/auth/**").permitAll()
-						.requestMatchers("/api/test/**").permitAll()
-						.anyRequest().authenticated()
-				);
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/test/**").permitAll()
+                        .anyRequest().authenticated()
+                );
 
-		http.authenticationProvider(authenticationProvider());
-		http.addFilterBefore(authTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(authTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
-		return http.build();
-	}
+        return http.build();
+    }
 }
